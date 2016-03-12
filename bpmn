@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# set this to workaround expr problems in shFlags on freebsd
+if uname -s | egrep -iq 'bsd'; then export EXPR_COMPAT=1; fi
+
+# enable debug mode
+if [ "$DEBUG" = "yes" ]; then
+  set -x
+fi
+
+# The sed expression here replaces all backslashes by forward slashes.
+# This helps our Windows users, while not bothering our Unix users.
+export BPMN_SCM_DIR=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
+export GIT_DIR=.bpmn
+export GIT_WORK_TREE=.
+
+# Print help
+usage() {
+    OUTPUT=`git help`
+    git_replace "$OUTPUT"
+}
+
+main() {
+    # When there are no options
+    if [ $# -lt 1 ]; then
+        usage
+        exit 1
+    fi
+
+    . "$BPMN_SCM_DIR/bpmn-common"
+
+    # This environmental variable fixes non-POSIX getopt style argument
+    # parsing, effectively breaking git-flow subcommand parsing on several
+    # Linux platforms.
+    export POSIXLY_CORRECT=1
+
+    # use the shFlags project to parse the command line arguments
+    . "$BPMN_SCM_DIR/shFlags/src/shflags"
+    FLAGS_PARENT="bpmn"
+
+    # allow user to request git action logging
+    DEFINE_boolean show_commands false 'show actions taken (git commands)' g
+
+    # do actual parsing
+    FLAGS "$@" || exit $?
+    eval set -- "${FLAGS_ARGV}"
+
+    # sanity checks
+    SUBCOMMAND="$1"; shift;
+    if [ -e "$BPMN_SCM_DIR/bpmn-$SUBCOMMAND" ]; then
+        # run command
+        . "$BPMN_SCM_DIR/bpmn-$SUBCOMMAND"
+        FLAGS_PARENT="bpmn $SUBCOMMAND"
+
+        # run the specified action
+        if [ "$1" == "help" ]; then
+            cmd_help
+        else
+            cmd_exec "$@"
+        fi
+    else
+        if is_git_command "$SUBCOMMAND"; then
+            OUTPUT=`git "$SUBCOMMAND" "$@"`
+            git_replace "$OUTPUT"
+            exit $?
+        fi
+
+        usage
+        exit 1
+    fi
+}
+
+main "$@"

@@ -1,0 +1,26 @@
+cmd_help() {
+    OUTPUT=`git help init -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    git_do "init" "$@"
+    ignore_bpmn_folder
+}
+
+ignore_bpmn_folder() {
+    write_to_ignore_file $(git config --global --get core.excludesfile)
+    write_to_ignore_file ".gitignore"
+}
+
+write_to_ignore_file() {
+    GLOBAL_GIT_IGNORE_FILE="$1"
+    if [ -e "$GLOBAL_GIT_IGNORE_FILE" ]; then
+        IGNORE_FILE_CONTENT=$( cat "$GLOBAL_GIT_IGNORE_FILE" )
+        if ! contains "$IGNORE_FILE_CONTENT" ".bpmn/"; then
+            echo ".bpmn/" >> "$GLOBAL_GIT_IGNORE_FILE"
+        fi
+    else
+        echo ".bpmn/" > "$GLOBAL_GIT_IGNORE_FILE"
+    fi
+}

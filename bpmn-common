@@ -1,0 +1,48 @@
+# shell output
+warn() {
+    echo "$@" >&2
+}
+
+die() {
+    warn "$@"
+    exit 1
+}
+
+# convenience functions for checking shFlags flags
+flag() { local FLAG; eval FLAG='$FLAGS_'$1; [ $FLAG -eq $FLAGS_TRUE ]; }
+noflag() { local FLAG; eval FLAG='$FLAGS_'$1; [ $FLAG -ne $FLAGS_TRUE ]; }
+
+git_do() {
+    # equivalent to git, used to indicate actions that make modifications
+    if flag show_commands; then
+        echo "git $@" >&2
+    fi
+
+    git_replace $(git "$@")
+}
+
+is_git_command() {
+    GIT_CMDS=$(git help -a | grep "^  [a-z]" | tr ' ' '\n' | grep -v "^$")
+    if contains "$GIT_CMDS" "$1"; then
+        return 0    # yes, it exists
+    else
+        return 1    # no, it does not
+    fi
+}
+
+contains() {
+    string="$1"
+    substring="$2"
+    if test "${string#*$substring}" != "$string"; then
+        return 0    # $substring is in $string
+    else
+        return 1    # $substring is not in $string
+    fi
+}
+
+git_replace() {
+    git_cmd_out="$@"
+    git_cmd_out=${git_cmd_out//Git /BPMN }
+    git_cmd_out=${git_cmd_out//git /bpmn }
+    printf "%s" "$git_cmd_out"
+}

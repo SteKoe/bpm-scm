@@ -1,0 +1,45 @@
+cmd_help() {
+    OUTPUT=`git help add -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    git_do "add" "$@"
+    for PROCESS in $(git diff --name-only --cached | grep ".bpmn$"); do
+        add_referenced_processes "$PROCESS"
+    done
+}
+
+# For a given Process find all references to other Processes and stage them as well
+add_referenced_processes() {
+    for REFERENCED_PROCESS_ID in $(get_referenced_process_ids "$1"); do
+        REFERENCED_PROCESSES=$(get_referenced_process "$REFERENCED_PROCESS_ID")
+        for REFERENCED_PROCESS in "$REFERENCED_PROCESSES"; do
+            if ! is_staged "$REFERENCED_PROCESS"; then
+                echo "$PROCESS references $REFERENCED_PROCESS and will be added, too."
+                cmd_exec "$REFERENCED_PROCESS"
+            fi
+        done
+    done
+}
+
+# Look for calledElement attributes which point to an id of another process
+get_referenced_process_ids() {
+    CONTENT=$(cat "$1")
+    REF_IDS=$(echo "$CONTENT" | sed -n "s/.*calledElement=\"\([^\"]*\)\".*/\1/p")
+    echo "$REF_IDS"
+}
+
+get_referenced_process() {
+    grep -Rl "id=\"$1\"" .
+}
+
+is_staged() {
+    for STAGED_FILE in $(git diff --name-only --cached); do
+        if [ "$1" == "./$STAGED_FILE" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
