@@ -4,36 +4,37 @@ cmd_help() {
 }
 
 cmd_exec() {
-    git_do "add" "$@"
+    git_do "add" "$@" &> /dev/null
     for PROCESS in $(git diff --name-only --cached | grep ".bpmn$"); do
         add_referenced_processes "$PROCESS"
     done
 }
 
 # For a given Process find all references to other Processes and stage them as well
+# $1    bpmn file
 add_referenced_processes() {
     for REFERENCED_PROCESS_ID in $(get_referenced_process_ids "$1"); do
-        REFERENCED_PROCESSES=$(get_referenced_process "$REFERENCED_PROCESS_ID")
-        for REFERENCED_PROCESS in "$REFERENCED_PROCESSES"; do
-            if ! is_staged "$REFERENCED_PROCESS"; then
-                echo "$PROCESS references $REFERENCED_PROCESS and will be added, too."
-                cmd_exec "$REFERENCED_PROCESS"
+        REFERENCING_PROCESSES=$(get_referencing_processes "$REFERENCED_PROCESS_ID")
+        for REFERENCING_PROCESS in "$REFERENCING_PROCESSES"; do
+            if [ -n "$REFERENCING_PROCESS" ] && ! is_staged "$REFERENCING_PROCESS"; then
+                echo "$PROCESS references $REFERENCING_PROCESS and will be added, too."
+                cmd_exec "$REFERENCING_PROCESS"
             fi
         done
     done
 }
 
-# Look for calledElement attributes which point to an id of another process
+# $1    bpmn file
 get_referenced_process_ids() {
-    CONTENT=$(cat "$1")
-    REF_IDS=$(echo "$CONTENT" | sed -n "s/.*calledElement=\"\([^\"]*\)\".*/\1/p")
-    echo "$REF_IDS"
+    echo $(sed -rn 's/<.*(process|collaboration).*id="([^"]*)".*/\2/p' "$1");
 }
 
-get_referenced_process() {
-    grep -Rl "id=\"$1\"" .
+# $1    id of process
+get_referencing_processes() {
+    grep -Rl "calledElement=\"$1\"" .
 }
 
+# $1    bpmn file name
 is_staged() {
     for STAGED_FILE in $(git diff --name-only --cached); do
         if [ "$1" == "./$STAGED_FILE" ]; then
