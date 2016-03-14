@@ -1,0 +1,8 @@
+cmd_help() {
+    OUTPUT=`git help status -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    git_do "status" "$@"
+}

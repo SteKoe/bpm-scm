@@ -4,7 +4,7 @@ cmd_help() {
 }
 
 cmd_exec() {
-    git_do "add" "$@" &> /dev/null
+    git_do add "$@"
     for PROCESS in $(git diff --name-only --cached | grep ".bpmn$"); do
         add_referenced_processes "$PROCESS"
     done
@@ -22,25 +22,4 @@ add_referenced_processes() {
             fi
         done
     done
-}
-
-# $1    bpmn file
-get_referenced_process_ids() {
-    echo $(sed -rn 's/<.*(process|collaboration).*id="([^"]*)".*/\2/p' "$1");
-}
-
-# $1    id of process
-get_referencing_processes() {
-    grep -Rl "calledElement=\"$1\"" .
-}
-
-# $1    bpmn file name
-is_staged() {
-    for STAGED_FILE in $(git diff --name-only --cached); do
-        if [ "$1" == "./$STAGED_FILE" ]; then
-            return 0
-        fi
-    done
-
-    return 1
 }

@@ -9,18 +9,17 @@ cmd_exec() {
 }
 
 ignore_bpmn_folder() {
-    write_to_ignore_file $(git config --global --get core.excludesfile)
     write_to_ignore_file ".gitignore"
 }
 
 write_to_ignore_file() {
-    GLOBAL_GIT_IGNORE_FILE="$1"
-    if [ -e "$GLOBAL_GIT_IGNORE_FILE" ]; then
-        IGNORE_FILE_CONTENT=$( cat "$GLOBAL_GIT_IGNORE_FILE" )
+    GIT_IGNORE_FILE="$1"
+    if [ -e "$GIT_IGNORE_FILE" ]; then
+        IGNORE_FILE_CONTENT=$( cat "$GIT_IGNORE_FILE" )
         if ! contains "$IGNORE_FILE_CONTENT" ".bpmn/"; then
-            echo ".bpmn/" >> "$GLOBAL_GIT_IGNORE_FILE"
+            echo ".bpmn/" >> "$GIT_IGNORE_FILE"
         fi
     else
-        echo ".bpmn/" > "$GLOBAL_GIT_IGNORE_FILE"
+        echo ".bpmn/" > "$GIT_IGNORE_FILE"
     fi
 }

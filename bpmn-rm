@@ -1,0 +1,16 @@
+cmd_help() {
+    OUTPUT=`git help rm -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    DEFINE_boolean cached false "Remove Processfile from index"
+    parse_args "$@"
+
+    if flag cached; then
+        FILES="$@"; shift
+        for REFERENCED_PROCESS in $(get_referenced_process_ids $@); do
+            git_do rm --cached "$REFERENCED_PROCESS"
+        done
+    fi
+}

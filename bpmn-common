@@ -8,6 +8,11 @@ die() {
     exit 1
 }
 
+parse_args() {
+    FLAGS "$@" || exit $?
+    eval set -- "${FLAGS_ARGV}"
+}
+
 # convenience functions for checking shFlags flags
 flag() { local FLAG; eval FLAG='$FLAGS_'$1; [ $FLAG -eq $FLAGS_TRUE ]; }
 noflag() { local FLAG; eval FLAG='$FLAGS_'$1; [ $FLAG -ne $FLAGS_TRUE ]; }
@@ -18,7 +23,7 @@ git_do() {
         echo "git $@" >&2
     fi
 
-    git_replace $(git "$@")
+    git_replace "$(git $@)"
 }
 
 is_git_command() {
@@ -45,4 +50,25 @@ git_replace() {
     git_cmd_out=${git_cmd_out//Git /BPMN }
     git_cmd_out=${git_cmd_out//git /bpmn }
     printf "%s" "$git_cmd_out"
+}
+
+# $1    bpmn file
+get_referenced_process_ids() {
+    echo $(sed -rn 's/<.*(process|collaboration).*id="([^"]*)".*/\2/p' "$1");
+}
+
+# $1    id of process
+get_referencing_processes() {
+    grep -Rl "calledElement=\"$1\"" .
+}
+
+# $1    bpmn file name
+is_staged() {
+    for STAGED_FILE in $(git diff --name-only --cached); do
+        if [ "$1" == "./$STAGED_FILE" ]; then
+            return 0
+        fi
+    done
+
+    return 1
 }
