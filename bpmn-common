@@ -53,7 +53,7 @@ git_replace() {
 }
 
 # $1    bpmn file
-get_referenced_process_ids() {
+get_process_ids() {
     echo $(sed -rn 's/<.*(process|collaboration).*id="([^"]*)".*/\2/p' "$1");
 }
 

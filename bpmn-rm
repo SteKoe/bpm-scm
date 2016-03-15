@@ -9,8 +9,41 @@ cmd_exec() {
 
     if flag cached; then
         FILES="$@"; shift
-        for REFERENCED_PROCESS in $(get_referenced_process_ids $@); do
-            git_do rm --cached "$REFERENCED_PROCESS"
+
+        for PROCESS in "$@"; do
+            for PROCESS_ID in $(get_process_ids $PROCESS); do
+                REFERENCING_PROCESSES=$(get_referencing_processes $PROCESS_ID)
+                if [ "$REFERENCING_PROCESSES" ]; then
+                    show_warning_and_prompt "$PROCESS" $REFERENCING_PROCESSES
+                else
+                    git_do rm --cached $PROCESS
+                fi
+            done
         done
     fi
+}
+
+show_warning_and_prompt() {
+    PROCESS=$1; shift
+    echo "You are about to remove $PROCESS from stage."
+    echo "The process has several referencing processes which will be unstaged as well:"
+    for REFERENCING_PROCESS in "$@"; do
+        echo "    $REFERENCING_PROCESS"
+    done
+    echo
+
+    if prompt "Dou you want to proceed?!"; then
+        git_do rm --cached $PROCESS $@
+    fi
+}
+
+prompt() {
+    while true; do
+        read -p "$1" yn
+        case $yn in
+            [Yy]* ) return 0; break;;
+            [Nn]* ) return 1;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
 }

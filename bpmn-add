@@ -4,7 +4,7 @@ cmd_help() {
 }
 
 cmd_exec() {
-    git_do add "$@"
+    git_do add "$@" &> /dev/null
     for PROCESS in $(git diff --name-only --cached | grep ".bpmn$"); do
         add_referenced_processes "$PROCESS"
     done
@@ -13,7 +13,7 @@ cmd_exec() {
 # For a given Process find all references to other Processes and stage them as well
 # $1    bpmn file
 add_referenced_processes() {
-    for REFERENCED_PROCESS_ID in $(get_referenced_process_ids "$1"); do
+    for REFERENCED_PROCESS_ID in $(get_process_ids "$1"); do
         REFERENCING_PROCESSES=$(get_referencing_processes "$REFERENCED_PROCESS_ID")
         for REFERENCING_PROCESS in "$REFERENCING_PROCESSES"; do
             if [ -n "$REFERENCING_PROCESS" ] && ! is_staged "$REFERENCING_PROCESS"; then
