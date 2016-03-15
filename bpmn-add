@@ -18,6 +18,7 @@ add_referenced_processes() {
         for REFERENCING_PROCESS in "$REFERENCING_PROCESSES"; do
             if [ -n "$REFERENCING_PROCESS" ] && ! is_staged "$REFERENCING_PROCESS"; then
                 echo "$PROCESS references $REFERENCING_PROCESS and will be added, too."
+                echo "" >> "$REFERENCING_PROCESS"
                 cmd_exec "$REFERENCING_PROCESS"
             fi
         done

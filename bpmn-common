@@ -64,6 +64,7 @@ get_referencing_processes() {
 
 # $1    bpmn file name
 is_staged() {
+    echo $(git diff --name-only --cached)
     for STAGED_FILE in $(git diff --name-only --cached); do
         if [ "$1" == "./$STAGED_FILE" ]; then
             return 0

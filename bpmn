@@ -24,9 +24,11 @@ usage() {
     echo
     echo "work on the current change (see also: bpmn help everyday)"
     echo "    add       Add file contents to the index"
+    echo "    reset     Reset current HEAD"
     echo "    rm        Remove files from the working tree and from index"
     echo
     echo "examine the history and state (see also: bpmn help revisions)"
+    echo "    log       Show commit logs"
     echo "    status    Show the working tree status"
 }
 

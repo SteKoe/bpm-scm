@@ -11,29 +11,33 @@ cmd_exec() {
         FILES="$@"; shift
 
         for PROCESS in "$@"; do
+            REFERENCING_PROCESSES=""
             for PROCESS_ID in $(get_process_ids $PROCESS); do
-                REFERENCING_PROCESSES=$(get_referencing_processes $PROCESS_ID)
-                if [ "$REFERENCING_PROCESSES" ]; then
-                    show_warning_and_prompt "$PROCESS" $REFERENCING_PROCESSES
-                else
-                    git_do rm --cached $PROCESS
-                fi
+                REFERENCING_PROCESSES+=$(get_referencing_processes $PROCESS_ID)
             done
+
+            if [ "$REFERENCING_PROCESSES" ]; then
+                show_warning_and_prompt "$PROCESS" $REFERENCING_PROCESSES
+            else
+                git_do rm --cached $PROCESS
+            fi
         done
     fi
 }
 
 show_warning_and_prompt() {
     PROCESS=$1; shift
-    echo "You are about to remove $PROCESS from stage."
-    echo "The process has several referencing processes which will be unstaged as well:"
+    echo
+    echo "Remove $PROCESS from stage."
+    echo "   Following referencing processes will be unstaged, too:"
+    echo
     for REFERENCING_PROCESS in "$@"; do
-        echo "    $REFERENCING_PROCESS"
+        echo "        $REFERENCING_PROCESS"
     done
     echo
 
     if prompt "Dou you want to proceed?!"; then
-        git_do rm --cached $PROCESS $@
+        git_do rm --cached $PROCESS $@ &> /dev/null
     fi
 }
 

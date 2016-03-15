@@ -1,0 +1,47 @@
+cmd_help() {
+    OUTPUT=`git help reset -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    shift
+    for PROCESS in "$@"; do
+        REFERENCING_PROCESSES=""
+        for PROCESS_ID in $(get_process_ids $PROCESS); do
+            REFERENCING_PROCESSES+=$(get_referencing_processes $PROCESS_ID)
+        done
+
+        if [ "$REFERENCING_PROCESSES" ]; then
+            show_warning_and_prompt "$PROCESS" $REFERENCING_PROCESSES
+        else
+            git_do reset HEAD $PROCESS
+        fi
+    done
+}
+
+show_warning_and_prompt() {
+    PROCESS=$1; shift
+    echo
+    echo "Remove $PROCESS from stage."
+    echo "   Following referencing processes will be unstaged, too:"
+    echo
+    for REFERENCING_PROCESS in "$@"; do
+        echo "        $REFERENCING_PROCESS"
+    done
+    echo
+
+    if prompt "Dou you want to proceed?!"; then
+        git_do reset HEAD $PROCESS $@ &> /dev/null
+    fi
+}
+
+prompt() {
+    while true; do
+        read -p "$1" yn
+        case $yn in
+            [Yy]* ) return 0; break;;
+            [Nn]* ) return 1;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+}

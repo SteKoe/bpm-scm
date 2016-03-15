@@ -1,0 +1,11 @@
+cmd_help() {
+    OUTPUT=`git help commit -m`
+    git_replace "$OUTPUT"
+}
+
+cmd_exec() {
+    DEFINE_string message "" "Remove Processfile from index" m
+    parse_args "$@"
+
+    git_do commit -m "$FLAGS_message"
+}
