@@ -1,26 +1,40 @@
 cmd_help() {
-    OUTPUT=`git help add -m`
+    local OUTPUT=`git help add -m`
     git_replace "$OUTPUT"
 }
 
 cmd_exec() {
-    git_do add "$@" &> /dev/null
+    git_do "add" "$@" &> /dev/null
     for PROCESS in $(git diff --name-only --cached | grep ".bpmn$"); do
         add_referenced_processes "$PROCESS"
     done
 }
 
-# For a given Process find all references to other Processes and stage them as well
-# $1    bpmn file
 add_referenced_processes() {
     for REFERENCED_PROCESS_ID in $(get_process_ids "$1"); do
-        REFERENCING_PROCESSES=$(get_referencing_processes "$REFERENCED_PROCESS_ID")
-        for REFERENCING_PROCESS in "$REFERENCING_PROCESSES"; do
-            if [ -n "$REFERENCING_PROCESS" ] && ! is_staged "$REFERENCING_PROCESS"; then
+        local REFERENCING_PROCESSES=$(get_referencing_processes "$REFERENCED_PROCESS_ID")
+
+        for REFERENCING_PROCESS in $REFERENCING_PROCESSES; do
+            if [ -n "${REFERENCING_PROCESS// }" ] && ! is_staged "$REFERENCING_PROCESS"; then
                 echo "$PROCESS references $REFERENCING_PROCESS and will be added, too."
-                echo "" >> "$REFERENCING_PROCESS"
+				touch_bpmn_model "$REFERENCING_PROCESS";
                 cmd_exec "$REFERENCING_PROCESS"
             fi
         done
     done
+}
+
+touch_bpmn_model() {
+	local DATE=$(date +'%s')
+	local HAS_DATE=$(has_bpmn_update_date "$1")
+	if [ -n "${HAS_DATE// }" ]; then	
+		sed -i "s/\(<!--\s*bpmn-scm:\)[^\s\-]*\(\s*-->\)/\1 $DATE \2/g" $1
+	else
+		sed -i "2i <!-- bpmn-scm: $DATE -->" $1
+	fi
+	
+}
+
+has_bpmn_update_date() {
+	echo $(grep -ERl "<!--[[:space:]]*bpmn-scm:[[:space:]]*[[:digit:]]*[[:space:]]*-->" $1)
 }

@@ -6,6 +6,8 @@ cmd_help() {
 cmd_exec() {
     git_do "init" "$@"
     ignore_bpmn_folder
+	git_do "add .gitignore" &> /dev/null
+	git_do "commit" "-m" "Init" &> /dev/null
 }
 
 ignore_bpmn_folder() {

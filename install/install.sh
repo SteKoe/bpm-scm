@@ -21,7 +21,7 @@ if [ -z "$REPO_HOME" ] ; then
 fi
 
 EXEC_FILES="bpmn"
-SCRIPT_FILES="bpmn-add bpmn-common bpmn-init bpmn-rm bpmn-status bpmn-shFlags"
+SCRIPT_FILES="bpmn-add bpmn-common bpmn-init bpmn-rm bpmn-status bpmn-shFlags bpmn-log bpmn-reset"
 SUBMODULE_FILE="bpmn-shFlags"
 
 echo "### gitflow no-make installer ###"

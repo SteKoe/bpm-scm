@@ -4,5 +4,5 @@ cmd_help() {
 }
 
 cmd_exec() {
-    git_do log "$@"
+    git_do "log" "$@"
 }
